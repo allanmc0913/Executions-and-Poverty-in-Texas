@@ -1,7 +1,4 @@
 #Running the code and generating the CSV file will take between 4-8 minutes (depending on the current API traffic)
-#Allan Chen
-#SI330 Final Project
-#Winter 2017
 
 from urllib.request import urlopen
 from bs4 import BeautifulSoup

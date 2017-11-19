@@ -5,12 +5,6 @@ import plotly.plotly as py
 import plotly.graph_objs as go
 
 
-# Name: Zoe Halbeisen
-# Unique name: zoeanne
-# Course: SI 330 (final Project)
-# Instructor: Matthew Kay
-# 4/13/17
-
 
 #######################################################################################################################
 

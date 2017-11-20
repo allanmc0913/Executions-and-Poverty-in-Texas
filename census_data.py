@@ -1,9 +1,6 @@
 from urllib.request import urlopen
 import json
 import csv
-import plotly.plotly as py
-import plotly.graph_objs as go
-
 
 
 #######################################################################################################################
@@ -154,40 +151,40 @@ with open('results.csv', 'w', newline = '') as output_file:
                                           'Poverty Rate': CB[county]['pov_rate']
                                           })
 
-######################################################################################################################
-
-
-# This chunk of code is creating a scatterplot of clearance vs poverty rates with Plotly.
-# The scatterplot will open in the broswser.
-x_clearance = []
-y_poverty = []
-for county in match:
-    x_clearance.append(convert_to_percentage(UCR[county + state]['CLR'] / UCR[county + state]['MRD']))
-    try:
-        y_poverty.append(CB[county + ' County']['pov_rate'])
-    except:
-        y_poverty.append(CB[county]['pov_rate'])
-
-trace = go.Scatter(
-    x = x_clearance,
-    y = y_poverty,
-    mode = 'markers'
-)
-x_axis_template = dict(
-    title = 'Clearance rate'
-)
-y_axis_template = dict(
-    title = 'Poverty rate'
-)
-layout = go.Layout(
-    title = '<b>Clearance Rates versus Poverty Rates in ' + UCR_state + '</b><br>(by county, units in percentages)',
-    xaxis = x_axis_template,
-    yaxis = y_axis_template,
-)
-data = [trace]
-fig = go.Figure(
-    data = data,
-    layout = layout
-)
-
-py.plot(fig)
+# ######################################################################################################################
+#
+#
+# # This chunk of code is creating a scatterplot of clearance vs poverty rates with Plotly.
+# # The scatterplot will open in the broswser.
+# x_clearance = []
+# y_poverty = []
+# for county in match:
+#     x_clearance.append(convert_to_percentage(UCR[county + state]['CLR'] / UCR[county + state]['MRD']))
+#     try:
+#         y_poverty.append(CB[county + ' County']['pov_rate'])
+#     except:
+#         y_poverty.append(CB[county]['pov_rate'])
+#
+# trace = go.Scatter(
+#     x = x_clearance,
+#     y = y_poverty,
+#     mode = 'markers'
+# )
+# x_axis_template = dict(
+#     title = 'Clearance rate'
+# )
+# y_axis_template = dict(
+#     title = 'Poverty rate'
+# )
+# layout = go.Layout(
+#     title = '<b>Clearance Rates versus Poverty Rates in ' + UCR_state + '</b><br>(by county, units in percentages)',
+#     xaxis = x_axis_template,
+#     yaxis = y_axis_template,
+# )
+# data = [trace]
+# fig = go.Figure(
+#     data = data,
+#     layout = layout
+# )
+#
+# py.plot(fig)

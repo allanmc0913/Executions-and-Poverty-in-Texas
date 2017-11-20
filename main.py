@@ -6,14 +6,24 @@ import csv
 import re
 import requests
 import json
-import census_data
 
 BASE_URL = 'https://www.tdcj.state.tx.us'
 
 inmatelst = []
 
+def get_county_codes():
+    codes = {}
+    reader = csv.DictReader(open("county_codes.csv", 'r', encoding="utf8"))
+
+    for row in reader:
+        codes["County Name"] = row['FIPS #']
+
+    return codes
+
 #Dictionary assignment for each of the 542 executed inmates
 def gettabledata():
+
+    county_codes = get_county_codes()
 
     #Connect to executed inmates webpage
     with urlopen('https://www.tdcj.state.tx.us/death_row/dr_executed_offenders.html') as response:
@@ -142,22 +152,39 @@ def gettabledata():
             else:
                 year = 1995
 
-            years = [1989, 1993]
+            year = int(year)
 
             if year not in range(1995, 2016):
-                closest = [year-x for x in years]
+                years = [1989, 1993]
+                year_diffs = {x: abs(year-x) for x in years}
+                year = min(year_diffs, key=lambda x: year_diffs[x])
+
+            try:
+                county = county_codes[inmatedict['County']]
+            except:
+                county = '001'
 
             cb_dict = {}
             with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
-                         'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:*&in=state:48&time='
-                         + year +
+                         'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
+                         + county +
+                         '&in=state:48&time='
+                         + str(year) +
                          '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:
+                print('http://api.census.gov/data/timeseries/poverty/saipe?'
+                         'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
+                         + county +
+                         '&in=state:48&time='
+                         + str(year) +
+                         '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d')
                 str_response = resp.read().decode('utf-8')
                 obj = json.loads(str_response)
                 for list in obj:
                     cb_dict[list[0]] = {'pov_rate': list[1], 'pov_count': list[2]}
 
             CB = census_bureau_SAIPE()
+            inmatedict['Pov Dict'] = CB
+
             inmatelst.append(inmatedict)
 
     return inmatelst
@@ -191,9 +218,6 @@ def census_bureau_SAIPE():
         for list in obj:
             cb_dict[list[0]] = {'pov_rate': list[1], 'pov_count': list[2]}
     return (cb_dict)
-
-
-CB = census_bureau_SAIPE()
 
 
 #Passes into list of dictionaries to be written to CSV file

@@ -6,6 +6,7 @@ import csv
 import re
 import requests
 import json
+import census_data
 
 BASE_URL = 'https://www.tdcj.state.tx.us'
 
@@ -133,7 +134,32 @@ def gettabledata():
                         inmatedict['Weight'] = "N/A"
                         inmatedict['Eye Color'] = "N/A"
                         inmatedict['Native State'] = "N/A"
+
+            if inmatedict['DOB'] != "N/A":
+                year = inmatedict['DOB'][-4:]
+            elif inmatedict['Date of Offense'] != "N/A":
+                year = inmatedict['Date of Offense'][-4:]
+            else:
+                year = 1995
+
+            years = [1989, 1993]
+
+            if year not in range(1995, 2016):
+                closest = [year-x for x in years]
+
+            cb_dict = {}
+            with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
+                         'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:*&in=state:48&time='
+                         + year +
+                         '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:
+                str_response = resp.read().decode('utf-8')
+                obj = json.loads(str_response)
+                for list in obj:
+                    cb_dict[list[0]] = {'pov_rate': list[1], 'pov_count': list[2]}
+
+            CB = census_bureau_SAIPE()
             inmatelst.append(inmatedict)
+
     return inmatelst
 
 #Passes in list of inmate dictionaries.  For each inmate dictionary, grab last statement
@@ -154,6 +180,21 @@ def calltoapi(inmatelst):
             inmatedict['Sentiment'] = 1
 
     return inmatelst
+
+#This function uses urllib requests to get Small Area Income and Poverty Estimates (SAIPE) data from the Census Bureau API
+#It uses the state_code and the API returns JSON. My function overall returns a nested dictionary which I store in the CB variable.
+def census_bureau_SAIPE():
+    cb_dict = {}
+    with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:*&in=state:48&time=2015&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as response:
+        str_response = response.read().decode('utf-8')
+        obj = json.loads(str_response)
+        for list in obj:
+            cb_dict[list[0]] = {'pov_rate': list[1], 'pov_count': list[2]}
+    return (cb_dict)
+
+
+CB = census_bureau_SAIPE()
+
 
 #Passes into list of dictionaries to be written to CSV file
 #Keeps count of rows written
@@ -206,6 +247,10 @@ def main():
     inmatelstwithsentiment = calltoapi(inmatelst)
 
     writetocsv(inmatelstwithsentiment)
+
+    return inmatelstwithsentiment
+
+
 
 if __name__ == '__main__':
     main()

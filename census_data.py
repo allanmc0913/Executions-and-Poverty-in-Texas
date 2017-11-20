@@ -36,7 +36,7 @@ except:
 
 #######################################################################################################################
 
-
+counties_code_file = open('')
 #This function uses urllib requests to get Small Area Income and Poverty Estimates (SAIPE) data from the Census Bureau API
 #It uses the state_code and the API returns JSON. My function overall returns a nested dictionary which I store in the CB variable.
 def census_bureau_SAIPE():

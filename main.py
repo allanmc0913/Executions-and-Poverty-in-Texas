@@ -153,7 +153,7 @@ def gettabledata():
             else:
                 year = 1995
 
-            if '/' in year:
+            if '/' in str(year):
                 year = 1989
                 
             year = int(year)
@@ -203,17 +203,6 @@ def calltoapi(inmatelst):
 
     return inmatelst
 
-#This function uses urllib requests to get Small Area Income and Poverty Estimates (SAIPE) data from the Census Bureau API
-#It uses the state_code and the API returns JSON. My function overall returns a nested dictionary which I store in the CB variable.
-def census_bureau_SAIPE():
-    cb_dict = {}
-    with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:*&in=state:48&time=2015&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as response:
-        str_response = response.read().decode('utf-8')
-        obj = json.loads(str_response)
-        for list in obj:
-            cb_dict[list[0]] = {'pov_rate': list[1], 'pov_count': list[2]}
-    return (cb_dict)
-
 
 #Passes into list of dictionaries to be written to CSV file
 #Keeps count of rows written
@@ -222,10 +211,11 @@ def writetocsv(inmatelstwithsentiment):
         inmate_file_writer = csv.DictWriter(output_file,
                                             fieldnames=['Execution No.', 'TDCJ Number', 'First Name', 'Last Name',
                                                         'Date Received', 'Age Received', 'Date of Offense',
-                                                        'Age at Offense', 'Execution Date', 'Age', 'Gender', 'DOB',
-                                                        'Race', 'County', 'Education Level', 'Weight',
+                                                        'Age at Offense', 'Execution Date', 'Execution Age', 'Gender',
+                                                        'DOB', 'Race', 'County', 'Education Level', 'Weight',
                                                         'Eye Color', 'Hair Color', 'Native State', 'Last Statement',
-                                                        'Sentiment', 'More Info URL', 'Last Statement URL'],
+                                                        'Sentiment', 'More Info URL', 'Last Statement URL',
+                                                        'Poverty Rate'],
                                             extrasaction='ignore',
                                             delimiter=',', quotechar='"')
         inmate_file_writer.writeheader()
@@ -254,14 +244,14 @@ def writetocsv(inmatelstwithsentiment):
                                          'Last Statement': inmatedict['Last Statement'],
                                          'Sentiment': inmatedict['Sentiment'],
                                          'More Info URL': inmatedict['More Info URL'],
-                                         'Last Statement URL': inmatedict['Last Statement URL']})
+                                         'Last Statement URL': inmatedict['Last Statement URL'],
+                                         'Poverty Rate': inmatedict['Poverty Rate']})
             row_count += 1
     print ("Done! Wrote a total of " + str(row_count) + " rows!")
 
 def main():
 
     inmatelst = gettabledata()
-
 
     inmatelstwithsentiment = calltoapi(inmatelst)
 

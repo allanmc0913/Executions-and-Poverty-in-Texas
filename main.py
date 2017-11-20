@@ -57,7 +57,8 @@ def gettabledata():
                           'Eye Color': None,
                           'Native State': None,
                           'Last Statement': "Hello",
-                          'Sentiment': None
+                          'Sentiment': None,
+                          'Poverty Rate': None
                           }
             if "death_row" not in inmatedict['Last Statement URL']:
                 reg = re.search(r'([\w./:]+)\.usdr([\w./]+)', inmatedict['Last Statement URL'])
@@ -167,26 +168,17 @@ def gettabledata():
             except:
                 county = '001'
 
-            cb_dict = {}
+
             with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
                          'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
                          + county +
                          '&in=state:48&time='
                          + str(year) +
                          '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:
-                print('http://api.census.gov/data/timeseries/poverty/saipe?'
-                         'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
-                         + county +
-                         '&in=state:48&time='
-                         + str(year) +
-                         '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d')
+
                 str_response = resp.read().decode('utf-8')
                 obj = json.loads(str_response)
-                for list in obj:
-                    cb_dict[list[0]] = {'pov_rate': list[1], 'pov_count': list[2]}
-
-            CB = census_bureau_SAIPE()
-            inmatedict['Pov Dict'] = CB
+                inmatedict['Poverty Rate'] = obj[1][1]
 
             inmatelst.append(inmatedict)
 

@@ -16,7 +16,7 @@ def get_county_codes():
     reader = csv.DictReader(open("county_codes.csv", 'r', encoding="utf8"))
 
     for row in reader:
-        codes["County Name"] = row['FIPS #']
+        codes[row["County Name"]] = row['FIPS #']
 
     return codes
 
@@ -24,6 +24,7 @@ def get_county_codes():
 def gettabledata():
 
     county_codes = get_county_codes()
+
 
     #Connect to executed inmates webpage
     with urlopen('https://www.tdcj.state.tx.us/death_row/dr_executed_offenders.html') as response:
@@ -164,14 +165,14 @@ def gettabledata():
                 year = min(year_diffs, key=lambda x: year_diffs[x])
 
             try:
-                county = county_codes[inmatedict['County']]
+                county = (county_codes[inmatedict['County']])
             except:
                 county = '001'
 
 
             with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
                          'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
-                         + county +
+                         + str(county) +
                          '&in=state:48&time='
                          + str(year) +
                          '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:

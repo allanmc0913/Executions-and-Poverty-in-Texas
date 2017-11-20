@@ -152,6 +152,9 @@ def gettabledata():
             else:
                 year = 1995
 
+            if '/' in year:
+                year = 1989
+                
             year = int(year)
 
             if year not in range(1995, 2016):

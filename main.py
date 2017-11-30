@@ -164,11 +164,12 @@ def gettabledata():
                 year_diffs = {x: abs(year-x) for x in years}
                 year = min(year_diffs, key=lambda x: year_diffs[x])
 
+            inmatedict['Census Year'] = year
+
             try:
                 county = (county_codes[inmatedict['County']])
             except:
                 county = '001'
-
 
             with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
                          'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
@@ -252,13 +253,53 @@ def writetocsv(inmatelstwithsentiment):
 
 def main():
 
-    inmatelst = gettabledata()
+    # inmatelst = gettabledata()
+    #
+    # inmatelstwithsentiment = calltoapi(inmatelst)
+    #
+    # writetocsv(inmatelstwithsentiment)
 
-    inmatelstwithsentiment = calltoapi(inmatelst)
+    years = [1989, 1993, 1995, 1996, 1997, 1998,
+             1999, 2000, 2001, 2002, 2003, 2004,
+             2005, 2006, 2007, 2008, 2009, 2010,
+             2011, 2012, 2013, 2014, 2015]
 
-    writetocsv(inmatelstwithsentiment)
+    counties = range(1, 508)
 
-    return inmatelstwithsentiment
+    pov_rates = []
+
+    with open('pov_rates.csv', 'w') as outfile:
+        w = csv.writer(outfile, delimiter=',')
+        for county in counties:
+            if county % 2 == 0:
+                continue
+            county = str(county)
+            if len(county) == 1:
+                county = "00"+county
+            elif len(county) == 2:
+                county = "0"+county
+
+            for year in years:
+                print(county, year)
+                try:
+                    with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
+                             'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
+                                     + county +
+                                     '&in=state:48&time='
+                                     + str(year) +
+                                     '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:
+                        str_response = resp.read().decode('utf-8')
+                        obj = json.loads(str_response)
+                        rate = obj[1][1]
+                        pov_rates.append((county, year, rate))
+                except:
+                    rate = 0
+                    print ('missing', county, year)
+
+                w.writerow((county, year,  rate))
+
+
+    # return inmatelstwithsentiment
 
 
 

@@ -1,5 +1,3 @@
-#Running the code and generating the CSV file will take between 4-8 minutes (depending on the current API traffic)
-
 from urllib.request import urlopen
 from bs4 import BeautifulSoup
 import csv
@@ -20,7 +18,7 @@ def get_county_codes():
 
     return codes
 
-#Dictionary assignment for each of the 542 executed inmates
+#Dictionary assignment for each of the 545 executed inmates
 def gettabledata():
 
     county_codes = get_county_codes()
@@ -61,6 +59,8 @@ def gettabledata():
                           'Sentiment': None,
                           'Poverty Rate': None
                           }
+
+            # URL cleaning
             if "death_row" not in inmatedict['Last Statement URL']:
                 reg = re.search(r'([\w./:]+)\.usdr([\w./]+)', inmatedict['Last Statement URL'])
                 inmatedict['Last Statement URL'] = reg.group(1) + ".us/death_row/dr" + reg.group(2)
@@ -90,8 +90,9 @@ def gettabledata():
                         laststatement = laststatement.decode(encoding='latin-1')
                         inmatedict['Last Statement'] = laststatement
 
-            #Some links for more offender information aren't text that I can extract using BS, but rather JPEG images of the actual inmate record.
-            #Using regex, if the url ends in JPEG, update dictionary keys with values of "N/A"
+            # Some links for more offender information aren't text that I can extract using BS,
+            # but rather JPEG images of the actual inmate record.
+            # Using regex, if the url ends in JPEG, update dictionary keys with values of "N/A"
             imageurls = re.findall(r'.+[.jpg]$', inmatedict['More Info URL'])
             if len(imageurls) > 0:
                 inmatedict['DOB'] = "N/A"
@@ -106,11 +107,12 @@ def gettabledata():
                 inmatedict['Eye Color'] = "N/A"
                 inmatedict['Native State'] = "N/A"
 
-            #If length is 0, it means that the more information URL does not end in JPEG, which means it is then in HTML format that I can use BS to scrape.
-            #Connect to More Info URL, find all table elements
-            #Try assigning values into dictionary after grabbing string and stripping
-            #Use compiled regex to clean data to get just the integers for columns like Weight
-            #Except clause accomodates when there is not HTML on the page
+            # If length is 0, it means that the more information URL does not end in JPEG,
+            # which means it is then in HTML format that I can use BS to scrape.
+            # Connect to More Info URL, find all table elements
+            # Try assigning values into dictionary after grabbing string and stripping
+            # Use compiled regex to clean data to get just the integers for columns like Weight
+            # Except clause accommodates when there is not HTML on the page
             if len(imageurls) == 0:
                 with urlopen(inmatedict['More Info URL']) as response3:
                     soup3 = BeautifulSoup(response3, 'html.parser')
@@ -164,8 +166,6 @@ def gettabledata():
                 year_diffs = {x: abs(year-x) for x in years}
                 year = min(year_diffs, key=lambda x: year_diffs[x])
 
-            inmatedict['Census Year'] = year
-
             try:
                 county = (county_codes[inmatedict['County']])
             except:
@@ -186,10 +186,10 @@ def gettabledata():
 
     return inmatelst
 
-#Passes in list of inmate dictionaries.  For each inmate dictionary, grab last statement
-#Make the API call using requests.post, passing in the last statement, returned is JSON dictionary
-#Convert sentiments into an integer scale for regression analysis
-#Update dictionary
+# Passes in list of inmate dictionaries.  For each inmate dictionary, grab last statement
+# Make the API call using requests.post, passing in the last statement, returned is JSON dictionary
+# Convert sentiments into an integer scale for regression analysis
+# Update dictionary
 def calltoapi(inmatelst):
     for inmatedict in inmatelst:
         laststatement = inmatedict['Last Statement']
@@ -206,8 +206,8 @@ def calltoapi(inmatelst):
     return inmatelst
 
 
-#Passes into list of dictionaries to be written to CSV file
-#Keeps count of rows written
+# Passes into list of dictionaries to be written to CSV file
+# Keeps count of rows written
 def writetocsv(inmatelstwithsentiment):
     with open('exinmates.csv', 'w', newline='') as output_file:
         inmate_file_writer = csv.DictWriter(output_file,
@@ -251,14 +251,9 @@ def writetocsv(inmatelstwithsentiment):
             row_count += 1
     print ("Done! Wrote a total of " + str(row_count) + " rows!")
 
-def main():
 
-    # inmatelst = gettabledata()
-    #
-    # inmatelstwithsentiment = calltoapi(inmatelst)
-    #
-    # writetocsv(inmatelstwithsentiment)
-
+# gather all available poverty rates for all Texas counties, and send to a csv file
+def pov_rates_to_csv():
     years = [1989, 1993, 1995, 1996, 1997, 1998,
              1999, 2000, 2001, 2002, 2003, 2004,
              2005, 2006, 2007, 2008, 2009, 2010,
@@ -275,32 +270,39 @@ def main():
                 continue
             county = str(county)
             if len(county) == 1:
-                county = "00"+county
+                county = "00" + county
             elif len(county) == 2:
-                county = "0"+county
+                county = "0" + county
 
             for year in years:
                 print(county, year)
                 try:
                     with urlopen('http://api.census.gov/data/timeseries/poverty/saipe?'
-                             'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
-                                     + county +
-                                     '&in=state:48&time='
-                                     + str(year) +
-                                     '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:
+                                 'get=NAME,SAEPOVRTALL_PT,SAEPOVALL_PT&for=county:'
+                                         + county +
+                                         '&in=state:48&time='
+                                         + str(year) +
+                                         '&key=2e6011085a8ad8f429ba2fcfe3294f1b36eee61d') as resp:
                         str_response = resp.read().decode('utf-8')
                         obj = json.loads(str_response)
                         rate = obj[1][1]
                         pov_rates.append((county, year, rate))
                 except:
                     rate = 0
-                    print ('missing', county, year)
+                    print('missing', county, year)
 
-                w.writerow((county, year,  rate))
+                w.writerow((county, year, rate))
 
 
-    # return inmatelstwithsentiment
+def main():
 
+    inmatelst = gettabledata()
+
+    inmatelstwithsentiment = calltoapi(inmatelst)
+
+    writetocsv(inmatelstwithsentiment)
+
+    pov_rates_to_csv()
 
 
 if __name__ == '__main__':
